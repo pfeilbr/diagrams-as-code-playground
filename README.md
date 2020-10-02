@@ -5,6 +5,7 @@ learn [Diagrams](https://diagrams.mingrammer.com/)(Diagram as Code), lets you dr
 ## Diagram Authoring Workflow
 
 ```sh
+pipenv install # install deps
 pipenv shell # correct python env
 make dev # re-runs on file changes / live reload
 
