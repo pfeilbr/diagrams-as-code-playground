@@ -19,25 +19,34 @@ with Diagram("Basic Serverless Application", show=False):
     with Cluster("Account: account-1"):
         dc = DirectConnect("Direct Connect")
         with Cluster("Region: us-east-1"):
-            cognito = Cognito("Cognito")
-            
+            cognito = Cognito("Cognito")        
             rt53 = Route53("Route 53")
             waf = WAF("WAF")
             acm = ACM("TLS Certificate")
             cf = CloudFront("CloudFront")
             apig = APIGateway("REST API")
-            ddb = Dynamodb("Data")
+            sm = SecretsManager("Secrets Manager")
+            ddb = Dynamodb("DynamoDB")
             s3 = S3("static web assets")
-            
+    
             with Cluster("VPC"):
-                sm = SecretsManager("Secrets Manager")
-                with Cluster("AZ"):
-                    with Cluster("Private Subnet"):
-                        rds = RDS("Oracle RDS")
+                
+                with Cluster("Availability Zone 1"):
+                    with Cluster("Private Subnet 1"):
+                        sm_vpce = Endpoint("VPC Endpoint")
+                        ddb_vpce = Endpoint("VPC Endpoint")
+                        rds_primary = RDS("Oracle RDS")
                         lambdas = Lambda("API Handler(s)")
                         users >> Edge(label="federated auth") >> cognito >> Edge(label="SAML2") >> pf
                         users >> Edge(label="https")>> dc >> rt53 >> waf >> acm >> cf >> s3
                         cf >> apig
-                        lambdas >> Edge(label="DB credentials") >> Endpoint("VPC Endpoint") >> sm
-                        apig >> Edge(label="json")>> lambdas >> rds            
+                        lambdas >> Edge(label="DB credentials") >> sm_vpce >> sm
+                        lambdas >> ddb_vpce
+                        apig >> Edge(label="json")>> lambdas >> rds_primary   
+                        ddb_vpce >> ddb
+                with Cluster("Availability Zone 2"):
+                    with Cluster("Private Subnet 2"):
+                        rds_standby = RDS("Oracle RDS (Standby)")
+
+                        rds_primary - Edge(label="replication") - rds_standby
 
