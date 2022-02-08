@@ -1,4 +1,5 @@
 from diagrams import Diagram, Cluster, Edge
+from diagrams.aws.general import User, Users, GenericDatabase
 from diagrams.aws.compute import Lambda, Batch, ECS, EKS, ElasticBeanstalk, Compute, AutoScaling, Fargate, Lightsail, SAR, ServerlessApplicationRepository
 from diagrams.aws.storage import S3, Backup, EBS, EFS, S3Glacier, Storage, StorageGateway
 from diagrams.aws.database import Dynamodb, RDS, Redshift, DB, ElastiCache, Neptune, Timestream
@@ -9,6 +10,7 @@ from diagrams.aws.analytics import Kinesis, Athena, Quicksight, ES, Elasticsearc
 from diagrams.aws.ml import Sagemaker, Comprehend, Rekognition, Forecast, Personalize, Polly, Textract, Transcribe, Translate, MachineLearning, Lex, SagemakerNotebook, SagemakerModel, SagemakerTrainingJob
 
 with Diagram("Basic Serverless Application", show=False):
+    users = Users("Users")
     with Cluster("Account: account-1"):
         with Cluster("Region: us-east-1"):
             rt53 = Route53("Route 53")
@@ -21,10 +23,10 @@ with Diagram("Basic Serverless Application", show=False):
             with Cluster("VPC"):
                 sm = SecretsManager("Secrets Manager")
                 with Cluster("AZ"):
-                    rds = RDS("RDS")
+                    rds = RDS("Oracle RDS")
                     lambdas = Lambda("API Handler(s)")
 
-                    rt53 >> waf >> cf >> s3
+                    users >> rt53 >> waf >> cf >> s3
                     cf >> apig
                     lambdas >> Edge(label="DB credentials") >> Endpoint("VPC Endpoint") >> sm
                     apig >> Edge(label="json")>> lambdas >> rds            
